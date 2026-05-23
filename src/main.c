@@ -31,13 +31,8 @@ int main(int argc, char* argv[]) {
         struct stat file_stats[32];
         long long input_file_size = 0;
 
-        for (arg_i = 2; arg_i <= argc; arg_i++) {
+        for (arg_i = 2; arg_i < argc; arg_i++) {
             char* arg = argv[arg_i];
-
-            if (arg == NULL) {
-                fprintf(stdout, "Error: -o flag not specified.\n");
-                return EXIT_FAILURE;
-            }
 
             // All input files are specified
             if (strcmp(arg, "-o") == 0) break;
@@ -69,7 +64,11 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE;
         }
 
-        arg_i++; // Move past -o
+        // If -o flag not specified
+        if (argv[arg_i] == NULL) output_file = "a.sau";
+
+        // If -o flag specified but no file name provided
+        arg_i++;
         output_file = argv[arg_i];
         if (output_file == NULL) output_file = "a.sau";
 
