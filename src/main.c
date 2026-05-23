@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
             if (last_slash != NULL) file_path = last_slash + 1; // Move past the last slash
 
             errno = 0;
-            if ((written_bytes = fprintf(out_fp, "%s%c,%04o,%lld|", file_path, '\0', file_stat->st_mode, (long long)file_stat->st_size)) < 0) {
+            if ((written_bytes = fprintf(out_fp, "%s%c,%04o,%lld|", file_path, '\0', (file_stat->st_mode & 07777), (long long)file_stat->st_size)) < 0) {
                 fprintf(stderr, "Error: An error occurred while writing to stdout: %s\n", strerror(errno));
                 fclose(out_fp);
                 remove(output_file); // Clean up partial output file
