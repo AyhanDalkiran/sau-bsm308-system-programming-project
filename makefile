@@ -3,15 +3,15 @@ SRC_DIR := src
 INC_DIR := inc
 OBJ_DIR := obj
 BIN_DIR := bin
-TARGET := $(BIN_DIR)/tarsau
+TARGET  := $(BIN_DIR)/tarsau
 
 # Compiler and flags
-CC := gcc
+CC     := gcc
 CFLAGS := -std=c11 -Wall -Wextra -Werror -pedantic -pedantic-errors
 
 # Source and object files
-SRCS     := $(wildcard $(SRC_DIR)/*.c)
-OBJS     := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 ## Targets
 all: clean | $(TARGET)
