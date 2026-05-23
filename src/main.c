@@ -89,94 +89,33 @@ int main(int argc, char* argv[]) {
 
         // Write the header
         uint32_t header_size = 0;
+        int written_bytes = 0;
 
         errno = 0;
-        if (fseek(out_fp, header_size, SEEK_SET) != 0) { // Reserve space for header size
+        if ((written_bytes = fprintf(out_fp, "%010" PRIu32 "|", header_size)) < 0) { // Placeholder for header size
             fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
             fclose(out_fp);
             remove(output_file); // Clean up partial output file
             return EXIT_FAILURE;
         }
-
-        header_size += 1; // 1st Vertical line seperator
-        errno = 0;
-        if (fwrite("|", sizeof(char), 1, out_fp) != 1) {
-            fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-            fclose(out_fp);
-            remove(output_file); // Clean up partial output file
-            return EXIT_FAILURE;
-        }
+        header_size += written_bytes;
         
         for (int i = 0; i < input_file_count; i++) {
             char* file_path = argv[input_file_start + i];
             struct stat* file_stat = &file_stats[i];
-            
+
             // Get only the file name from the path
             char* last_slash = strrchr(file_path, '/');
             if (last_slash != NULL) file_path = last_slash + 1; // Move past the last slash
-            size_t file_path_len = strlen(file_path);
 
-            // Convest file permissions to octal string
-            char mode_str[5]; // 4 digits + null terminator
-            snprintf(mode_str, sizeof(mode_str), "%04o", file_stat->st_mode);
-            size_t mode_str_len = strlen(mode_str);
-
-            // Convert file size to string
-            char size_str[21]; // Enough to hold 64-bit number + null terminator
-            snprintf(size_str, sizeof(size_str), "%lld", (long long)file_stat->st_size);
-            size_t size_str_len = strlen(size_str);
-
-            // Write header entry for this file
             errno = 0;
-            if (fwrite(file_path, sizeof(char), file_path_len, out_fp) != file_path_len) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
+            if ((written_bytes = fprintf(out_fp, "%s%c,%04o,%lld|", file_path, '\0', file_stat->st_mode, (long long)file_stat->st_size)) < 0) {
+                fprintf(stderr, "Error: An error occurred while writing to stdout: %s\n", strerror(errno));
                 fclose(out_fp);
                 remove(output_file); // Clean up partial output file
                 return EXIT_FAILURE;
             }
-            if (fwrite("\0", sizeof(char), 1, out_fp) != 1) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-            if (fwrite(",", sizeof(char), 1, out_fp) != 1) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-            if (fwrite(mode_str, sizeof(char), mode_str_len, out_fp) != mode_str_len) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-            if (fwrite(",", sizeof(char), 1, out_fp) != 1) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-            if (fwrite(size_str, sizeof(char), size_str_len, out_fp) != size_str_len) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-            if (fwrite("|", sizeof(char), 1, out_fp) != 1) {
-                fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
-                fclose(out_fp);
-                remove(output_file); // Clean up partial output file
-                return EXIT_FAILURE;
-            }
-
-            header_size += strlen(file_path) + 1; // File name + null terminator
-            header_size += 1; // Comma separator
-            header_size += sizeof(mode_str); // File permissions
-            header_size += 1; // Comma separator
-            header_size += sizeof(size_str); // File size
-            header_size += 1; // Vertical line separator
+            header_size += written_bytes;
         }
 
         // Write the file data
@@ -222,19 +161,19 @@ int main(int argc, char* argv[]) {
                 return EXIT_FAILURE;
             }
         }
-
-        // Update header size at the beginning of the file
-        char header_size_str[11]; // 10 bytes fixed width + null terminator
-        snprintf(header_size_str, sizeof(header_size_str), "%010" PRIu32, header_size);
-        size_t header_size_str_len = 10; // Always 10 characters
         
+        // Seek to beginnig of file to write the actual header size
+        errno = 0;
         if (fseek(out_fp, 0, SEEK_SET) != 0) {
             fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
             fclose(out_fp);
             remove(output_file); // Clean up partial output file
             return EXIT_FAILURE;
         }
-        if (fwrite(header_size_str, sizeof(char), header_size_str_len, out_fp) != header_size_str_len) {
+
+        // Update header size at the beginning of the file
+        errno = 0;
+        if (fprintf(out_fp, "%010" PRIu32, header_size) < 0) {
             fprintf(stderr, "Error: An error occurred while writing the output file: %s\n", strerror(errno));
             fclose(out_fp);
             remove(output_file); // Clean up partial output file
