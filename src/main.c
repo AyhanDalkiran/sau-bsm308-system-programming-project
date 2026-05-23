@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
             remove(output_file); // Clean up partial output file
             return EXIT_FAILURE;
         }
-        header_size += written_bytes;
+        header_size += written_bytes - 10; // Subtract the placeholder size
         
         for (int i = 0; i < input_file_count; i++) {
             char* file_path = argv[input_file_start + i];
